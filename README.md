@@ -72,7 +72,7 @@ Status values accepted by the core: `DRAFT`, `ACTIVE`, `SUSPENDED`, `CLOSED`, `C
 
 - Java 25
 - Apache Maven 3.9+
-- `core-lending-mortgages-sdk` 26.10.4
+- `core-lending-mortgages-sdk` 26.10.5
 - Apache Kafka on `localhost:9092` when event publishing is left at the default
 
 ### Environment
