@@ -1,0 +1,478 @@
+openapi: 3.0.1
+info:
+  title: Domain Lending Mortgage API
+  description: "Orchestrates mortgage agreement records through core-lending-mortgage.\
+    \ It creates, updates, changes status, and closes mortgage agreements through\
+    \ the mortgage core. Party, contract, and product identifiers stay UUIDs."
+  contact:
+    name: Firefly Software Foundation
+    email: dev@fireflysoftware.io
+  version: 1.0.0
+servers:
+- url: https://openplatform.fireflysoftware.io/domain-lending-mortgage
+  description: Development Environment
+- url: /
+  description: Local Development Environment
+tags:
+- name: MortgageAgreements
+  description: Domain orchestration for mortgage agreements
+paths:
+  /api/v1/mortgage-agreements/{mortgageAgreementId}/status:
+    put:
+      tags:
+      - MortgageAgreements
+      summary: Update status
+      description: Runs the status saga against core-lending-mortgage.
+      operationId: updateStatus
+      parameters:
+      - name: mortgageAgreementId
+        in: path
+        description: Core identifier
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StatusChangeRequest"
+        required: true
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MortgageAgreementDTO"
+        "404":
+          description: Not found
+  /api/v1/mortgage-agreements/{mortgageAgreementId}:
+    get:
+      tags:
+      - MortgageAgreements
+      summary: Get mortgage agreement
+      description: Reads one record from core-lending-mortgage.
+      operationId: get
+      parameters:
+      - name: mortgageAgreementId
+        in: path
+        description: Core identifier
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MortgageAgreementDTO"
+        "404":
+          description: Not found
+    put:
+      tags:
+      - MortgageAgreements
+      summary: Update mortgage agreement
+      description: Runs the update saga against core-lending-mortgage. Status is left
+        unchanged.
+      operationId: update
+      parameters:
+      - name: mortgageAgreementId
+        in: path
+        description: Core identifier
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MortgageAgreementDTO"
+        required: true
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MortgageAgreementDTO"
+        "404":
+          description: Not found
+    delete:
+      tags:
+      - MortgageAgreements
+      summary: Remove mortgage agreement
+      description: Deletes the record through core-lending-mortgage when that core
+        allows removal.
+      operationId: remove
+      parameters:
+      - name: mortgageAgreementId
+        in: path
+        description: Core identifier
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Removed
+        "404":
+          description: Not found
+  /api/v1/mortgage-agreements/{mortgageAgreementId}/close:
+    post:
+      tags:
+      - MortgageAgreements
+      summary: Close mortgage agreement
+      description: Closes a mortgage agreement when the mortgage core allows CLOSED.
+      operationId: close
+      parameters:
+      - name: mortgageAgreementId
+        in: path
+        description: Core identifier
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReasonRequest"
+        required: true
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MortgageAgreementDTO"
+        "404":
+          description: Not found
+  /api/v1/mortgage-agreements/{mortgageAgreementId}/cancel:
+    post:
+      tags:
+      - MortgageAgreements
+      summary: Cancel mortgage agreement
+      description: Cancels a mortgage agreement when the mortgage core allows CANCELLED.
+      operationId: cancel
+      parameters:
+      - name: mortgageAgreementId
+        in: path
+        description: Core identifier
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReasonRequest"
+        required: true
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MortgageAgreementDTO"
+        "404":
+          description: Not found
+  /api/v1/mortgage-agreements:
+    post:
+      tags:
+      - MortgageAgreements
+      summary: Create mortgage agreement
+      description: Runs the register saga against core-lending-mortgage.
+      operationId: create
+      parameters:
+      - name: X-Idempotency-Key
+        in: header
+        description: "Unique key for idempotent requests. If provided, ensures that\
+          \ identical requests with the same key will only be processed once."
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MortgageAgreementDTO"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MortgageAgreementDTO"
+        "400":
+          description: Invalid request
+components:
+  schemas:
+    StatusChangeRequest:
+      type: object
+      properties:
+        status:
+          type: string
+        statusReason:
+          type: string
+    MortgageAgreementDTO:
+      required:
+      - agreementStatus
+      - applicationId
+      - mortgageType
+      - rateType
+      type: object
+      properties:
+        mortgageAgreementId:
+          type: string
+          format: uuid
+          nullable: true
+        applicationId:
+          type: string
+          format: uuid
+        servicingCaseId:
+          type: string
+          format: uuid
+          nullable: true
+        proposedOfferId:
+          type: string
+          format: uuid
+          nullable: true
+        agreementStatus:
+          type: string
+          enum:
+          - DRAFT
+          - ACTIVE
+          - SUSPENDED
+          - CLOSED
+          - CANCELLED
+        mortgageType:
+          type: string
+          enum:
+          - CONVENTIONAL
+          - GOVERNMENT_BACKED
+          - JUMBO
+          - REVERSE
+          - ISLAMIC_MURABAHA
+          - ISLAMIC_IJARA
+          - ISLAMIC_MUSHARAKA
+          - ISLAMIC_DIMINISHING_MUSHARAKA
+          - BRIDGE
+          - CONSTRUCTION
+          - RENOVATION
+          - EQUITY_RELEASE
+          - SHARED_EQUITY
+          - SHARED_APPRECIATION
+          - BALLOON
+          - INTEREST_ONLY
+          - OFFSET
+          - FLEXIBLE
+          - TRACKER
+          - DISCOUNT
+          - CAPPED
+          - PORTABLE
+          - ASSUMABLE
+          - NON_RECOURSE
+          - RECOURSE
+          - COMMERCIAL
+          - BUY_TO_LET
+          - SECOND_HOME
+          - SELF_BUILD
+          - GUARANTOR
+          - JOINT_BORROWER_SOLE_PROPRIETOR
+          - EQUITY_LOAN
+          - RIGHT_TO_BUY
+          - HELP_TO_BUY
+          - LIFETIME
+          - HOME_REVERSION
+          - AGRICULTURAL
+          - LAND
+          - OTHER
+        lienPosition:
+          type: string
+          nullable: true
+          enum:
+          - FIRST
+          - SECOND
+          - THIRD
+          - SUBORDINATE
+        rateType:
+          type: string
+          enum:
+          - FIXED
+          - VARIABLE
+          - HYBRID
+        initialInterestRate:
+          type: number
+          nullable: true
+        referenceRate:
+          type: string
+          nullable: true
+        marginRate:
+          type: number
+          nullable: true
+        fixedRatePeriodMonths:
+          type: integer
+          format: int32
+          nullable: true
+        rateCap:
+          type: number
+          nullable: true
+        rateFloor:
+          type: number
+          nullable: true
+        periodicRateCap:
+          type: number
+          nullable: true
+        profitRate:
+          type: number
+          nullable: true
+        rentalRate:
+          type: number
+          nullable: true
+        bankOwnershipPercentage:
+          type: number
+          nullable: true
+        purchasePrice:
+          type: number
+          nullable: true
+        markupAmount:
+          type: number
+          nullable: true
+        notaryName:
+          type: string
+          nullable: true
+        notaryRegistrationNumber:
+          type: string
+          nullable: true
+        deedNumber:
+          type: string
+          nullable: true
+        deedDate:
+          type: string
+          format: date
+          nullable: true
+        registryOffice:
+          type: string
+          nullable: true
+        registryVolume:
+          type: string
+          nullable: true
+        registryBook:
+          type: string
+          nullable: true
+        registryFolio:
+          type: string
+          nullable: true
+        registryInscriptionDate:
+          type: string
+          format: date
+          nullable: true
+        isAssumable:
+          type: boolean
+          nullable: true
+        isPortable:
+          type: boolean
+          nullable: true
+        isRecourse:
+          type: boolean
+          nullable: true
+        allowsEarlyRepayment:
+          type: boolean
+          nullable: true
+        earlyRepaymentPenaltyRate:
+          type: number
+          nullable: true
+        earlyRepaymentPenaltyPeriodMonths:
+          type: integer
+          format: int32
+          nullable: true
+        allowsPartialPrepayment:
+          type: boolean
+          nullable: true
+        partialPrepaymentMinAmount:
+          type: number
+          nullable: true
+        partialPrepaymentMaxPerYear:
+          type: number
+          nullable: true
+        subrogationAllowed:
+          type: boolean
+          nullable: true
+        subrogationFee:
+          type: number
+          nullable: true
+        agreementSignedDate:
+          type: string
+          format: date
+          nullable: true
+        agreementEffectiveDate:
+          type: string
+          format: date
+          nullable: true
+        createdBy:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+        updatedBy:
+          type: string
+          nullable: true
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+    ReasonRequest:
+      type: object
+      properties:
+        statusReason:
+          type: string
